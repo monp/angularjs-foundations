@@ -1,6 +1,18 @@
 'use strict';
 
 angular.module('comicsApp')
+    .controller('tokenController', ['$scope', 'jwtService', function($scope, jwtService) {
+        $scope.generateToken = function() {
+            jwtService.getToken().get(
+                function(response) {
+                    localStorage.token = response.token;
+                }
+            );
+        };
+        $scope.removeToken = function() {
+            localStorage.removeItem("token");
+        };
+    }])
     .controller('comicsController', ['$scope', 'comicsService', function($scope, comicsService) {
       comicsService.getComics().get(
           function(response) {
