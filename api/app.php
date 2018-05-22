@@ -1,5 +1,6 @@
 <?php
 
+use Firebase\JWT\JWT;
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Slim\Views\PhpRenderer;
@@ -8,8 +9,23 @@ require '../composer_modules/autoload.php';
 
 $app = new \Slim\App([ 'settings' => [ 'displayErrorDetails' => true ]]);
 
+// DI Container
 $container = $app->getContainer();
 $container['renderer'] = new PhpRenderer("../dist");
+$container['secret'] = 'ThisIsASuperMegaSecretKey';
+
+// Routes
+$app->get('/token', function (Request $request, Response $response) {
+    $token = [
+        "iss" => "http://localhost",
+        "iat" => time(),
+        'exp' => strtotime("+12 month")
+        // You can add private claims here
+    ];
+    // Encode payload with the secret key
+    $encoded_token = JWT::encode($token, $this->secret);
+    return $response->withJson([ "token" => $encoded_token ]);
+});
 
 $app->get('/v1/public/comics[/{id}]', function (Request $request, Response $response) {
     $json_data = file_get_contents('../help/marvel.json');
