@@ -13,6 +13,8 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-karma');
   grunt.loadNpmTasks('grunt-protractor-runner');
 
+  grunt.loadNpmTasks('grunt-composer');
+
   // Define the configuration for all the tasks
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
@@ -222,4 +224,6 @@ module.exports = function (grunt) {
   grunt.registerTask('distribution',['build','zip']);
 
   grunt.registerTask('test', ['karma', 'build', 'connect:dist', 'protractor:e2e']);
+
+  grunt.registerTask('fetch', ['composer:install']);
 };
