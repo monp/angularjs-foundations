@@ -27,11 +27,36 @@ $app->get('/token', function (Request $request, Response $response) {
     return $response->withJson([ "token" => $encoded_token ]);
 });
 
-$app->get('/v1/public/comics[/{id}]', function (Request $request, Response $response) {
-    $json_data = file_get_contents('../help/marvel.json');
-    $json = json_decode($json_data, true);
-    // id parameter is ignored (not useful for JWT demo)
-    return $response->withJson($json);
+$app->group('/v1/public', function () use ($app) {
+    // We want to secure all API calls under /v1/public
+    $app->get('/comics[/{id}]', function (Request $request, Response $response) {
+        $json_data = file_get_contents('../help/marvel.json');
+        $json = json_decode($json_data, true);
+        return $response->withJson($json);
+    });
+})->add(function (Request $request, Response $response, $next) {
+    // We define a middleware to protect the access to the current group
+
+    $headers = $request->getHeader("Authorization"); // Check for token in header
+    $header = isset($headers[0]) ? $headers[0] : "";
+
+    if (preg_match("/Bearer\s+(.*)$/i", $header, $matches)) {
+        $token = $matches[1];
+        try {
+            // We try to decode the token in header with secret key,
+            // if it fails we return a 401 Unauthorized HTTP Response
+            $decoded = JWT::decode(
+                $token,
+                $this->secret,
+                ["HS256", "HS512", "HS384"]
+            );
+            $request = $request->withAttribute("token", $decoded);
+            return $next($request, $response);
+        } catch (Exception $exception) {
+            // Do nothing, we will return a 401 response anyway
+        }
+    }
+    return new Response(401);
 });
 
 $app->get('/', function (Request $request, Response $response){
