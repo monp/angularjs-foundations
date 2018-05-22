@@ -14,6 +14,9 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-protractor-runner');
 
   grunt.loadNpmTasks('grunt-composer');
+  grunt.loadNpmTasks('grunt-php');
+  grunt.loadNpmTasks('grunt-parallel');
+  grunt.loadNpmTasks('grunt-open');
 
   // Define the configuration for all the tasks
   grunt.initConfig({
@@ -50,6 +53,12 @@ module.exports = function (grunt) {
           {
             cwd: 'app',
             src: '**',
+            dest: 'dist',
+            expand: true
+          },
+          {
+            cwd: 'api',
+            src: 'index.php',
             dest: 'dist',
             expand: true
           },
@@ -202,6 +211,30 @@ module.exports = function (grunt) {
     },
     zip: {
       '<%= pkg.name %>-distribution.zip': ['dist/**/*.*']
+    },
+    php: {
+      server: {
+        options: {
+          port: 8080,
+          keepalive: true,
+          open: false,
+          base: 'dist'
+        }
+      }
+    },
+    parallel: {
+      server: {
+        options: {
+          grunt: true,
+          stream: true
+        },
+        tasks: ['php:server','watch','browser']
+      }
+    },
+    open : {
+      server : {
+        path: 'http://localhost:8080'
+      }
     }
   });
 
@@ -225,5 +258,15 @@ module.exports = function (grunt) {
 
   grunt.registerTask('test', ['karma', 'build', 'connect:dist', 'protractor:e2e']);
 
+  // Task for installing PHP dependencies with composer
   grunt.registerTask('fetch', ['composer:install']);
+
+  // Open a web browser
+  grunt.registerTask('browser', function() {
+      const done = this.async();
+      setTimeout(function() {
+        grunt.task.run(['open:server']);
+        done();
+        }, 1000);
+  });
 };
